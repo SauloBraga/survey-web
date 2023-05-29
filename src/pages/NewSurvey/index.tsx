@@ -2,17 +2,34 @@ import { Box, Button, Divider, IconButton, TextField, Typography } from "@mui/ma
 import AddBox from '@mui/icons-material/AddBox'
 import Delete from '@mui/icons-material/Delete'
 
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { api } from "../../services/api";
 
+interface QuestionType {
+  id?: string;
+  description: string;
+}
+
 export function NewSurvey() {
-  const [questions, setQuestions] = useState([{description: ''}])
+  const [questions, setQuestions] = useState<QuestionType[]>([])
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
+  const [isEdit, setIsEdit] = useState(false)
+  const navigate = useNavigate()
+  const { state } = useLocation()
+
+  useEffect(() => {
+    if(state) {
+      setIsEdit(true);
+      setName(state.name)
+      setDescription(state.description)
+      setQuestions(state.questions)
+    }
+  }, [state])
 
   function addAnswer() {
-    setQuestions([...questions, {description: ''}])
+    setQuestions([...questions, { description: ''}])
   }
 
   function removeAnswer(index: number) {
@@ -23,7 +40,7 @@ export function NewSurvey() {
     setQuestions([...newAnswers])
   }
 
-  function handleAnswerChange(event: any, index: number) {
+  function handleQuestionChange(event: any, index: number) {
     event.preventDefault()
 
     setQuestions(a => {
@@ -37,7 +54,14 @@ export function NewSurvey() {
   async function handleSubmit(event:any) {
     event.preventDefault()
 
-    await api.post('surveys',{name, description, questions})
+    if(isEdit){
+      console.log(questions)
+      await api.put(`surveys/${state.id}`, { name, description, questions })
+    } else {
+      const questionsToSend = questions.map(q=> q.description);
+      await api.post('surveys',{name, description, questions: questionsToSend})
+    }
+    navigate('/')
   }
   return (
     <Box component="form" onSubmit={handleSubmit}  sx={{
@@ -74,14 +98,14 @@ export function NewSurvey() {
               <AddBox/>
             </IconButton>
           </Box>
-          {questions.map((answer, index) => 
+          {questions.map((question, index) => 
             <Box key={index} sx={{ display: 'flex', flexDirection: 'row' }}>
               <TextField   
                 key={index}      
                 type="text"
                 variant="outlined"
-                value={answer.description}
-                onChange={(event) => handleAnswerChange(event, index)}
+                value={question.description}
+                onChange={(event) => handleQuestionChange(event, index)}
                 fullWidth
               />
               <IconButton onClick={() => {removeAnswer(index)}}>

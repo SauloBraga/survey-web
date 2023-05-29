@@ -1,18 +1,17 @@
 import { Box, Button, TextField } from "@mui/material";
-import { useState } from "react";
-import { api } from "../../services/api";
+import { useContext, useState } from "react";
+import { AuthContext } from "../../contexts/Auth";
 
 export function Login() {
   const [document, setDocument] = useState('')
   const [password, setPassword] = useState('')
 
+  const { handleLogin } = useContext(AuthContext)
+
   async function handleSubmit(event: any) {
-    event.preventDefault()
-    const {data} = await api.post('auth/login', {document, password});
-
-    console.log(data)
-    localStorage.setItem('survey:user_token', data.access_token)
-
+    event.preventDefault();
+    console.log('login')
+    await handleLogin(document, password);
   }
 
 
